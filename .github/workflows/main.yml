@@ -52,7 +52,7 @@ jobs:
         if: contains(github.event.inputs.action, 'create')
         id: ids
         run: |
-          echo "VPC_ID=$(terraform output -raw vpc_id)" >> $GITHUB_ENV
+          echo "CREATED_VPC_ID=$(terraform output -raw created_vpc_id)" >> $GITHUB_ENV
 
       - name: Collect status (create)
         if: contains(github.event.inputs.action, 'create')
@@ -68,7 +68,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           message: |
             *Create VPC Results*:
-            *VPC Id*: ${{ steps.ids.outputs.VPC_ID }}
+            *VPC Id*: ${{ steps.ids.outputs.CREATED_VPC_ID }}
             *Terraform Apply Status*: ${{ env.TERRAFORM_STATUS }}
 
       - name: Destroy Terraform (destroy)
