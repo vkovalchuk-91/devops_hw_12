@@ -46,8 +46,8 @@ jobs:
         run: |
           terraform apply -auto-approve
 
-      - name: Get outputs (apply)
-        if: contains(github.event.inputs.action, 'apply')
+      - name: Get outputs (create)
+        if: contains(github.event.inputs.action, 'create')
         run: |
           terraform apply | tee output.txt
           
