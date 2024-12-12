@@ -52,8 +52,8 @@ jobs:
         if: contains(github.event.inputs.action, 'create')
         id: ids
         run: |
-          output=$(terraform output created_vpc_id)
-          echo $output
+          CREATED_VPC_ID=$(terraform output created_vpc_id)
+          echo $CREATED_VPC_ID
 
       - name: Collect status (create)
         if: contains(github.event.inputs.action, 'create')
