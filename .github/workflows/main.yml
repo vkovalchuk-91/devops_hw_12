@@ -1,0 +1,96 @@
+name: Create/destroy VPC Operations
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Choose the Terraform action to perform'
+        required: true
+        default: 'create'
+        type: choice
+        options:
+          - 'create'
+          - 'destroy'
+
+jobs:
+  process-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set initial Terraform status
+        run: echo "TERRAFORM_STATUS=❌ Failed" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Init Terraform
+        run: terraform init
+
+      - name: Plan Terraform (create)
+        if: contains(github.event.inputs.action, 'create')
+        run: terraform plan
+
+      - name: Apply Terraform (create)
+        if: contains(github.event.inputs.action, 'create')
+        id: apply
+        run: |
+          terraform apply -auto-approve
+
+      - name: Get outputs (apply)
+        if: contains(github.event.inputs.action, 'apply')
+        run: |
+          terraform apply | tee output.txt
+          
+          # Витягування значень із логів
+          VPC_ID=$(output.txt | awk -F'vpc_id = "' '{print $2}' | awk -F'"' '{print $1}')
+           
+          # Збереження значень як змінних середовища для подальших кроків
+          echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
+
+      - name: Collect status (create)
+        if: contains(github.event.inputs.action, 'create')
+        id: collect_status_apply
+        run: |
+          echo "TERRAFORM_STATUS=$([[ '${{ steps.apply.outcome }}' == 'success' ]] && echo '✅ Success')" >> $GITHUB_ENV
+
+      - name: Send Telegram Notification (create)
+        if: contains(github.event.inputs.action, 'create')
+        uses: cbrgm/telegram-github-action@v1
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            *Create VPC Results*:
+            *VPC Id*: ${{ env.VPC_ID }}
+            *Terraform Apply Status*: ${{ env.TERRAFORM_STATUS }}
+
+      - name: Destroy Terraform (destroy)
+        if: contains(github.event.inputs.action, 'destroy')
+        id: destroy
+        run: terraform destroy -auto-approve
+
+      - name: Collect status (destroy)
+        if: contains(github.event.inputs.action, 'destroy')
+        id: collect_status_destroy
+        run: |
+          echo "TERRAFORM_STATUS=$([[ '${{ steps.destroy.outcome }}' == 'success' ]] && echo '✅ Success')" >> $GITHUB_ENV
+
+      - name: Send Telegram Notification (destroy)
+        if: contains(github.event.inputs.action, 'destroy')
+        uses: cbrgm/telegram-github-action@v1
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            *Destroy tracked VPC's Result*:
+            *Terraform Destroy Status*: ${{ env.TERRAFORM_STATUS }}
