@@ -1,4 +1,4 @@
-name: Create/destroy VPC Operations
+name: Create/destroy VPC
 
 on:
   workflow_dispatch:
@@ -48,16 +48,11 @@ jobs:
         run: |
           terraform apply -auto-approve
 
-      - name: Get outputs (create)
-        if: contains(github.event.inputs.action, 'create')
-        run: |
-          echo "CREATED_VPC_ID=$(terraform output created_vpc_id)" >> $GITHUB_ENV
-          echo $CREATED_VPC_ID
-
       - name: Collect status (create)
         if: contains(github.event.inputs.action, 'create')
         id: collect_status_apply
         run: |
+          echo "CREATED_VPC_ID=$(terraform output created_vpc_id)" >> $GITHUB_ENV
           echo "TERRAFORM_STATUS=$([[ '${{ steps.apply.outcome }}' == 'success' ]] && echo '✅ Success')" >> $GITHUB_ENV
 
       - name: Send Telegram Notification (create)
