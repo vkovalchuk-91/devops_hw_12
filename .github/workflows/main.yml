@@ -49,7 +49,7 @@ jobs:
       - name: Get outputs (create)
         if: contains(github.event.inputs.action, 'create')
         run: |
-          terraform apply | tee output.txt
+          terraform output | tee output.txt
           
           # Витягування значень із логів
           VPC_ID=$(output.txt | awk -F'vpc_id = "' '{print $2}' | awk -F'"' '{print $1}')
