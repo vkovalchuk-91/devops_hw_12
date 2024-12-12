@@ -32,6 +32,8 @@ jobs:
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
 
       - name: Init Terraform
         run: terraform init
@@ -48,16 +50,9 @@ jobs:
 
       - name: Get outputs (create)
         if: contains(github.event.inputs.action, 'create')
+        id: ids
         run: |
-          terraform output | tee output.txt
-          
-          # Витягування значень із логів
-          VPC_ID=$(grep 'vpc_id = ' output.txt | awk -F'"' '{print $2}')
-           
-          # Збереження значень як змінних середовища для подальших кроків
-          echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
-
-          echo "VPC_ID: $VPC_ID"
+          echo "VPC_ID=$(terraform output -raw vpc_id)" >> $GITHUB_ENV
 
       - name: Collect status (create)
         if: contains(github.event.inputs.action, 'create')
@@ -73,7 +68,7 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           message: |
             *Create VPC Results*:
-            *VPC Id*: ${{ env.VPC_ID }}
+            *VPC Id*: ${{ steps.ids.outputs.VPC_ID }}
             *Terraform Apply Status*: ${{ env.TERRAFORM_STATUS }}
 
       - name: Destroy Terraform (destroy)
