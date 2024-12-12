@@ -52,7 +52,7 @@ jobs:
           terraform output | tee output.txt
           
           # Витягування значень із логів
-          tttt=$(tail -2 output.txt | awk -F'vpc_id = "' '{print $2}' | awk -F'"' '{print $1}')
+          tttt=$(output.txt | awk -F'vpc_id = "' '{print $2}' | awk -F'"' '{print $1}')
            
           # Збереження значень як змінних середовища для подальших кроків
           echo "tttt=$tttt" >> $GITHUB_ENV
