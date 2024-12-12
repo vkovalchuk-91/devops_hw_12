@@ -57,6 +57,8 @@ jobs:
           # Збереження значень як змінних середовища для подальших кроків
           echo "VPC_ID=$VPC_ID" >> $GITHUB_ENV
 
+          echo "VPC_ID: $VPC_ID"
+
       - name: Collect status (create)
         if: contains(github.event.inputs.action, 'create')
         id: collect_status_apply
