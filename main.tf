@@ -124,6 +124,6 @@ resource "aws_route_table_association" "database" {
   route_table_id = aws_route_table.database[count.index].id
 }
 
-output "vpc_id" {
+output "created_vpc_id" {
     value = aws_vpc.main.id
 }
